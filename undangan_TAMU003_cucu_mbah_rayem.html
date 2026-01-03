@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Christopher Robert Evans & Indah Rahmawati</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600&family=Great+Vibes&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --primary: #c89968;
+            --secondary: #8b6f47;
+            --cream: #f5f0e8;
+            --dark: #3d3127;
+            --autumn: #d4a373;
+            --sakura: #f4c2c2;
+        }
+        
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: linear-gradient(135deg, #f5f0e8 0%, #e8dcc8 100%);
+            color: var(--dark);
+            overflow-x: hidden;
+        }
+        
+        /* Sakura Falling Animation */
+        .sakura-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9998;
+            overflow: hidden;
+        }
+        
+        .sakura {
+                position: absolute;
+                width: 20px;
+                height: 20px;
+                background: radial-gradient(circle, #f4c2c2 0%, #e89b9b 50%, transparent 70%);
+                border-radius: 50% 0 50% 0;
+                opacity: 0.8;
+                animation: fall linear infinite;
+                box-shadow: 0 0 8px #e89b9b66;
+        }
+        
+        @keyframes fall {
+            0% {
+                transform: translateY(-10vh) rotate(0deg) scale(1);
+                opacity: 0;
+            }
+            10% { opacity: 0.7; }
+            90% { opacity: 0.7; }
+            100% {
+                transform: translateY(110vh) rotate(720deg) scale(0.8);
+                opacity: 0;
+            }
+        }
+        
+        /* Loading Screen */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #f5f0e8 0%, #e8dcc8 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease;
+        }
+        
+        .loading-screen.hidden { opacity: 0; pointer-events: none; }
+        
+        .loader {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(200, 153, 104, 0.3);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        /* Cover Page */
+        .cover {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(245,240,232,0.98) 0%, rgba(232,220,200,0.98) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+        
+        .cover.hide { opacity: 0; transform: scale(0.95); pointer-events: none; }
+        
+        .cover-content {
+            text-align: center;
+            max-width: 600px;
+            padding: 40px 20px;
+            position: relative;
+        }
+        
+        .cover-ornament {
+                width: 60px;
+                height: 60px;
+                margin: 0 auto 30px;
+                background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><g><ellipse cx="50" cy="45" rx="8" ry="10" fill="%23c41e3a" transform="rotate(-20 50 45)"/><ellipse cx="50" cy="45" rx="8" ry="10" fill="%23c41e3a" transform="rotate(20 50 45)"/><ellipse cx="50" cy="45" rx="8" ry="10" fill="%23c41e3a" transform="rotate(60 50 45)"/><ellipse cx="50" cy="45" rx="8" ry="10" fill="%23c41e3a" transform="rotate(100 50 45)"/><ellipse cx="50" cy="45" rx="8" ry="10" fill="%23c41e3a" transform="rotate(140 50 45)"/><ellipse cx="50" cy="52" rx="5" ry="6" fill="%23d94452"/><circle cx="50" cy="48" r="6" fill="%23ffd700"/><line x1="50" y1="58" x2="50" y2="85" stroke="%23228b22" stroke-width="3"/><path d="M 50 65 Q 40 68 38 72" fill="none" stroke="%23228b22" stroke-width="2"/><path d="M 50 70 Q 60 73 62 77" fill="none" stroke="%23228b22" stroke-width="2"/></g></svg>') center/contain no-repeat;
+                animation: pulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.1); opacity: 1; }
+        }
+        
+        .cover h1 {
+            font-family: 'Great Vibes', cursive;
+            font-size: 4rem;
+            color: var(--primary);
+            margin-bottom: 15px;
+            line-height: 1.2;
+            animation: fadeInUp 1s ease;
+        }
+        
+        .cover .ampersand {
+            font-family: 'Great Vibes', cursive;
+            font-size: 2.5rem;
+            color: var(--autumn);
+            margin: 15px 0;
+            animation: fadeInUp 1.2s ease;
+        }
+        
+        .cover .date {
+            font-size: 0.95rem;
+            letter-spacing: 2px;
+            color: var(--secondary);
+            margin-bottom: 30px;
+            animation: fadeInUp 1.4s ease;
+        }
+        
+        .cover .dear {
+            font-size: 0.85rem;
+            color: var(--secondary);
+            margin-bottom: 8px;
+            animation: fadeInUp 1.6s ease;
+        }
+        
+        .cover .guest-name {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.6rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 35px;
+            animation: fadeInUp 1.8s ease;
+        }
+        
+        .open-btn {
+            padding: 14px 45px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--autumn) 100%);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(200, 153, 104, 0.3);
+            animation: fadeInUp 2s ease;
+        }
+        
+        .open-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(200, 153, 104, 0.4);
+        }
+        
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Main Content */
+        .main-content { opacity: 0; transition: opacity 0.8s ease; }
+        .main-content.show { opacity: 1; }
+        
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            background: linear-gradient(to bottom, rgba(245,240,232,0.9), rgba(232,220,200,0.9));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 80px 20px;
+            position: relative;
+        }
+        
+        .hero-content { position: relative; z-index: 1; max-width: 800px; }
+        
+        .hero .tagline {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.8rem;
+            font-style: italic;
+            color: var(--secondary);
+            margin-bottom: 40px;
+            opacity: 0.9;
+        }
+        
+        .hero h2 {
+            font-family: 'Great Vibes', cursive;
+            font-size: 5rem;
+            color: var(--primary);
+            margin: 30px 0;
+        }
+        
+        .hero .ampersand {
+            font-family: 'Great Vibes', cursive;
+            font-size: 3rem;
+            color: var(--autumn);
+            display: block;
+            margin: 20px 0;
+        }
+        
+        .hero .date-main {
+            font-size: 1.1rem;
+            color: var(--secondary);
+            letter-spacing: 2px;
+            margin-top: 30px;
+        }
+        
+        /* Section Styles */
+        section { padding: 80px 20px; max-width: 1100px; margin: 0 auto; }
+        
+        .section-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2.8rem;
+            font-weight: 600;
+            color: var(--primary);
+            text-align: center;
+            margin-bottom: 50px;
+            position: relative;
+        }
+        
+        .section-title::after {
+            content: '✿';
+            display: block;
+            font-size: 1.5rem;
+            color: var(--autumn);
+            margin: 15px auto 0;
+        }
+        
+        /* Countdown */
+        .countdown-section { background: rgba(255,255,255,0.5); }
+        
+        .countdown {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .countdown-item {
+            background: rgba(255,255,255,0.8);
+            padding: 30px 20px;
+            border-radius: 15px;
+            border: 2px solid rgba(200,153,104,0.3);
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        
+        .countdown-number {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--primary);
+            display: block;
+        }
+        
+        .countdown-label {
+            font-size: 0.85rem;
+            color: var(--secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 10px;
+        }
+        
+        /* Couple Info */
+        .couple-section { background: transparent; }
+        
+        /* Photo Gallery */
+        .gallery-section { background: rgba(255,255,255,0.5); }
+        
+        .gallery-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-top: 40px;
+        }
+        
+        .gallery-item {
+            position: relative;
+            border-radius: 20px;
+            overflow: hidden;
+            aspect-ratio: 3/4;
+            border: 3px solid rgba(200,153,104,0.3);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .gallery-item:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+        }
+        
+        .gallery-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+        
+        .gallery-item:hover img {
+            transform: scale(1.05);
+        }
+        
+        .gallery-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 50%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            display: flex;
+            align-items: flex-end;
+            padding: 20px;
+        }
+        
+        .gallery-item:hover .gallery-overlay {
+            opacity: 1;
+        }
+        
+        /* Lightbox */
+        .lightbox {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .lightbox.active {
+            display: flex;
+        }
+        
+        .lightbox-content {
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+            border-radius: 10px;
+        }
+        
+        .lightbox-close {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            width: 50px;
+            height: 50px;
+            background: rgba(255,255,255,0.2);
+            border: 2px solid white;
+            border-radius: 50%;
+            color: white;
+            font-size: 30px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        
+        .lightbox-close:hover {
+            background: rgba(255,255,255,0.3);
+            transform: rotate(90deg);
+        }
+        
+        .couple-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 50px;
+            margin-top: 40px;
+        }
+        
+        .couple-card {
+            background: rgba(255,255,255,0.7);
+            padding: 50px 40px;
+            border-radius: 20px;
+            text-align: center;
+            border: 2px solid rgba(200,153,104,0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+        }
+        
+        .couple-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .couple-card h3 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2.2rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 25px;
+        }
+        
+        .couple-card p {
+            color: var(--dark);
+            line-height: 1.8;
+            margin: 8px 0;
+        }
+        
+        .couple-card p.label {
+            font-size: 0.9rem;
+            color: var(--secondary);
+            margin-top: 20px;
+            margin-bottom: 5px;
+        }
+        
+        /* Event Details */
+        .event-section { background: rgba(255,255,255,0.5); }
+        
+        .event-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 40px;
+            margin-top: 40px;
+        }
+        
+        .event-card {
+            background: rgba(255,255,255,0.8);
+            padding: 40px;
+            border-radius: 20px;
+            border: 2px solid rgba(200,153,104,0.2);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+        }
+        
+        .event-card h3 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 25px;
+            text-align: center;
+        }
+        
+        .event-card .detail {
+            color: var(--dark);
+            line-height: 1.9;
+            margin: 18px 0;
+        }
+        
+        .event-card .label {
+            color: var(--secondary);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+        
+        .maps-btn {
+            display: inline-block;
+            margin: 20px auto 0;
+            padding: 12px 35px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--autumn) 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(200,153,104,0.3);
+        }
+        
+        .maps-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(200,153,104,0.4);
+        }
+        
+        .map-container {
+            margin-top: 20px;
+            border-radius: 15px;
+            overflow: hidden;
+            border: 2px solid rgba(200,153,104,0.2);
+        }
+        
+        /* Gift Section */
+        .gift-section { background: transparent; }
+        
+        .gift-card {
+            background: rgba(255,255,255,0.7);
+            padding: 50px 40px;
+            border-radius: 20px;
+            max-width: 550px;
+            margin: 0 auto;
+            border: 2px solid rgba(200,153,104,0.2);
+            text-align: center;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+        }
+        
+        .gift-card .intro {
+            color: var(--dark);
+            margin-bottom: 30px;
+            line-height: 1.8;
+        }
+        
+        .gift-card .bank-name {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.6rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 20px;
+        }
+        
+        .gift-card .account-number {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin: 20px 0;
+            letter-spacing: 2px;
+        }
+        
+        .gift-card .account-name {
+            color: var(--secondary);
+            margin-bottom: 25px;
+        }
+        
+        .copy-btn {
+            padding: 12px 35px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--autumn) 100%);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(200,153,104,0.3);
+        }
+        
+        .copy-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(200,153,104,0.4);
+        }
+        
+        /* Footer */
+        footer {
+            background: rgba(245,240,232,0.8);
+            padding: 50px 20px;
+            text-align: center;
+            color: var(--secondary);
+            border-top: 1px solid rgba(200,153,104,0.2);
+        }
+        
+        footer p { margin: 12px 0; line-height: 1.8; }
+        
+        footer .names {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin-top: 25px;
+        }
+        
+        /* Music Player */
+        .music-player {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--autumn) 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 8px 25px rgba(200,153,104,0.4);
+            z-index: 100;
+            transition: all 0.3s ease;
+        }
+        
+        .music-player:hover { transform: scale(1.1); }
+        
+        .music-player.playing::after {
+            content: '♪';
+            font-size: 1.5rem;
+            color: white;
+            animation: music-note 1s ease-in-out infinite;
+        }
+        
+        .music-player.paused::after {
+            content: '▶';
+            font-size: 1.2rem;
+            color: white;
+        }
+        
+        @keyframes music-note {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .cover h1 { font-size: 3rem; }
+            .hero h2 { font-size: 3.5rem; }
+            .section-title { font-size: 2.2rem; }
+            .countdown { grid-template-columns: repeat(2, 1fr); }
+            .music-player { width: 50px; height: 50px; bottom: 20px; right: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sakura Falling -->
+    <div class="sakura-container" id="sakuraContainer"></div>
+
+    <!-- Loading Screen -->
+    <div class="loading-screen" id="loading">
+        <div class="loader"></div>
+    </div>
+
+    <!-- Audio -->
+    <audio id="bgMusic" loop>
+        <source src="https://github.com/ardlifirdaus/wedding-invitation-pages/raw/refs/heads/main/audio/sempurna.mp3" type="audio/mpeg">
+    </audio>
+
+    <!-- Cover Page -->
+    <div class="cover" id="cover">
+        <div class="cover-content">
+            <div class="cover-ornament"></div>
+            <h1>Christopher Robert Evans</h1>
+            <div class="ampersand">&amp;</div>
+            <h1>Indah Rahmawati</h1>
+            <p class="date">Minggu, 27 Januari 2030 • 08.00 WIB</p>
+            <p class="dear">Kepada Yth.</p>
+            <p class="guest-name">- Cucu Mbah Rayem</p>
+            <button class="open-btn" id="openBtn">Buka Undangan</button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content" id="mainContent">
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="hero-content">
+                <p class="tagline">The Wedding Of</p>
+                <h2>Christopher Robert Evans</h2>
+                <span class="ampersand">&amp;</span>
+                <h2>Indah Rahmawati</h2>
+                <p class="date-main">Minggu, 27 Januari 2030 • 08.00 WIB</p>
+            </div>
+        </section>
+
+        <!-- Countdown -->
+        <section class="countdown-section">
+            <h2 class="section-title">Waktu Menuju Acara</h2>
+            <div class="countdown" id="countdown">
+                <div class="countdown-item">
+                    <span class="countdown-number" id="days">0</span>
+                    <span class="countdown-label">Hari</span>
+                </div>
+                <div class="countdown-item">
+                    <span class="countdown-number" id="hours">0</span>
+                    <span class="countdown-label">Jam</span>
+                </div>
+                <div class="countdown-item">
+                    <span class="countdown-number" id="minutes">0</span>
+                    <span class="countdown-label">Menit</span>
+                </div>
+                <div class="countdown-item">
+                    <span class="countdown-number" id="seconds">0</span>
+                    <span class="countdown-label">Detik</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Couple Info -->
+        <section class="couple-section">
+            <h2 class="section-title">Mempelai</h2>
+            <div class="couple-container">
+                <div class="couple-card">
+                    <h3>Christopher Robert Evans</h3>
+                    <p class="label">Putra Pertama dari</p>
+                    <p><strong>Bapak Bob</strong></p>
+                    <p>&amp;</p>
+                    <p><strong>Ibu Lisa (née Capuano)</strong></p>
+                </div>
+                <div class="couple-card">
+                    <h3>Indah Rahmawati</h3>
+                    <p class="label">Putri Ketujuh dari</p>
+                    <p><strong>Bapak Sutoyo</strong></p>
+                    <p>&amp;</p>
+                    <p><strong>Ibu Sumitri</strong></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Photo Gallery -->
+        
+        <section class="gallery-section">
+            <h2 class="section-title">Our Moments</h2>
+            <div class="gallery-container">
+                
+                <div class="gallery-item">
+                    <img src="https://github.com/ardlifirdaus/wedding-invitation-pages/blob/main/poto/2.jpeg?raw=true" alt="Prewedding Photo 1" loading="lazy">
+                    <div class="gallery-overlay"></div>
+                </div>
+                <div class="gallery-item">
+                    <img src="https://github.com/ardlifirdaus/wedding-invitation-pages/blob/main/poto/3.jpeg?raw=true" alt="Prewedding Photo 2" loading="lazy">
+                    <div class="gallery-overlay"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Event Details -->
+        <section class="event-section">
+            <h2 class="section-title">Acara Pernikahan</h2>
+            <div class="event-cards">
+                <div class="event-card">
+                    <h3>Akad Nikah</h3>
+                    <div class="detail">
+                        <span class="label">Waktu</span><br>
+                        Minggu, 27 Januari 2030<br>
+                        Pukul :08.00 WIB
+                    </div>
+                    <div class="detail">
+                        <span class="label">Alamat</span><br>
+                        Hilton Boston Park Plaza<br><br>50 Park Plaza, Boston, MA 02116, Amerika Serikat
+                    </div>
+                    
+                    <a href="https://maps.app.goo.gl/UFGAPSQCf9CoABhk6" target="_blank" class="maps-btn">&#128205; Lihat Lokasi</a>
+                    
+                    
+                </div>
+                <div class="event-card">
+                    <h3>Resepsi</h3>
+                    <div class="detail">
+                        <span class="label">Waktu</span><br>
+                        Minggu, 27 Januari 2030<br>
+                        Pukul :11.00 WIB
+                    </div>
+                    <div class="detail">
+                        <span class="label">Alamat</span><br>
+                        Hilton Boston Park Plaza<br><br>50 Park Plaza, Boston, MA 02116, Amerika Serikat
+                    </div>
+                    
+                    <a href="https://maps.app.goo.gl/UFGAPSQCf9CoABhk6" target="_blank" class="maps-btn">&#128205; Lihat Lokasi</a>
+                    
+                    
+                </div>
+            </div>
+        </section>
+
+        <!-- Gift Section -->
+        <section class="gift-section">
+            <h2 class="section-title">Wedding Gift</h2>
+            <div class="gift-card">
+                <p class="intro">
+                    Doa restu Anda adalah hadiah terindah bagi kami. Namun jika memberi adalah ungkapan kasih, 
+                    Anda dapat memberikan melalui:
+                </p>
+                <div class="bank-name">BSI</div>
+                <div class="account-number" id="accountNumber">12345678</div>
+                <div class="account-name">a.n. Chris Evans</div>
+                <button class="copy-btn" onclick="copyAccount()">Salin Nomor Rekening</button>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer>
+            <p>Merupakan suatu kehormatan dan kebahagiaan bagi kami apabila</p>
+            <p>Bapak/Ibu/Saudara/i berkenan hadir untuk memberikan doa restu.</p>
+            <p class="names">Christopher Robert Evans &amp; Indah Rahmawati</p>
+        </footer>
+    </div>
+
+    <!-- Music Player -->
+    <div class="music-player paused" id="musicPlayer"></div>
+
+    <!-- Lightbox -->
+    <div class="lightbox" id="lightbox">
+        <span class="lightbox-close" id="lightboxClose">&times;</span>
+        <img class="lightbox-content" id="lightboxImg" src="" alt="Photo">
+    </div>
+
+    <script>
+        // Create Falling Sakura
+        function createSakura() {
+            const container = document.getElementById('sakuraContainer');
+            const sakuraCount = 20;
+            
+            for (let i = 0; i < sakuraCount; i++) {
+                const sakura = document.createElement('div');
+                sakura.className = 'sakura';
+                sakura.style.left = Math.random() * 100 + '%';
+                sakura.style.animationDuration = (Math.random() * 10 + 10) + 's';
+                sakura.style.animationDelay = Math.random() * 5 + 's';
+                sakura.style.width = (Math.random() * 15 + 10) + 'px';
+                sakura.style.height = sakura.style.width;
+                container.appendChild(sakura);
+            }
+        }
+        
+        createSakura();
+
+        // Loading Screen
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                document.getElementById('loading').classList.add('hidden');
+            }, 1000);
+        });
+
+        // Cover Page
+        const openBtn = document.getElementById('openBtn');
+        const cover = document.getElementById('cover');
+        const mainContent = document.getElementById('mainContent');
+        const bgMusic = document.getElementById('bgMusic');
+        const musicPlayer = document.getElementById('musicPlayer');
+
+        openBtn.addEventListener('click', function() {
+            cover.classList.add('hide');
+            setTimeout(function() {
+                mainContent.classList.add('show');
+            }, 300);
+            
+            bgMusic.play().then(function() {
+                console.log('Music playing successfully');
+                musicPlayer.classList.remove('paused');
+                musicPlayer.classList.add('playing');
+            }).catch(function(error) {
+                console.error('Audio play error:', error);
+                musicPlayer.classList.add('paused');
+                musicPlayer.classList.remove('playing');
+            });
+        });
+
+        // Music Player Control
+        musicPlayer.addEventListener('click', function() {
+            if (bgMusic.paused) {
+                bgMusic.play();
+                this.classList.remove('paused');
+                this.classList.add('playing');
+            } else {
+                bgMusic.pause();
+                this.classList.remove('playing');
+                this.classList.add('paused');
+            }
+        });
+
+        // Countdown
+        function updateCountdown() {
+            const target = new Date('2030-01-27T08:00:00');
+            const now = new Date();
+            const diff = target - now;
+
+            if (diff <= 0) {
+                document.getElementById('days').textContent = '0';
+                document.getElementById('hours').textContent = '0';
+                document.getElementById('minutes').textContent = '0';
+                document.getElementById('seconds').textContent = '0';
+                return;
+            }
+
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+            document.getElementById('days').textContent = days;
+            document.getElementById('hours').textContent = hours.toString().padStart(2, '0');
+            document.getElementById('minutes').textContent = minutes.toString().padStart(2, '0');
+            document.getElementById('seconds').textContent = seconds.toString().padStart(2, '0');
+        }
+
+        updateCountdown();
+        setInterval(updateCountdown, 1000);
+
+        // Copy Account Number
+        function copyAccount() {
+            const accountNumber = document.getElementById('accountNumber').textContent;
+            navigator.clipboard.writeText(accountNumber).then(function() {
+                alert('Nomor rekening berhasil disalin!');
+            }).catch(function() {
+                const temp = document.createElement('textarea');
+                temp.value = accountNumber;
+                document.body.appendChild(temp);
+                temp.select();
+                document.execCommand('copy');
+                document.body.removeChild(temp);
+                alert('Nomor rekening berhasil disalin!');
+            });
+        }
+
+        // Smooth scroll reveal animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver(function(entries) {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('section').forEach(section => {
+            section.style.opacity = '0';
+            section.style.transform = 'translateY(30px)';
+            section.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+            observer.observe(section);
+        });
+        
+        // Lightbox functionality
+        const lightbox = document.getElementById('lightbox');
+        const lightboxImg = document.getElementById('lightboxImg');
+        const lightboxClose = document.getElementById('lightboxClose');
+        
+        document.querySelectorAll('.gallery-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const img = this.querySelector('img');
+                lightboxImg.src = img.src;
+                lightbox.classList.add('active');
+            });
+        });
+        
+        function closeLightbox() {
+            lightbox.classList.remove('active');
+        }
+        
+        if (lightboxClose) lightboxClose.addEventListener('click', closeLightbox);
+        if (lightbox) lightbox.addEventListener('click', function(e) {
+            if (e.target === lightbox) closeLightbox();
+        });
+    </script>
+</body>
+</html>
