@@ -228,9 +228,9 @@ wedding-invitation-pages/
 Edit in `index.html`:
 
 ```html
-<h1>Jacob Benjamin Gyllenhaal</h1>
+<h1>Christoper Robert Evans</h1>
 <h1>&</h1>
-<h1>Anisa Dwi Astuti</h1>
+<h1>Indah Rahmawati</h1>
 ```
 
 ### 2. Update Wedding Date
