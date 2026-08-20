@@ -7,3 +7,20 @@
 - Guest book/wishes (optional)
 - Photo upload from guests (optional)
 
+template share WA:
+Kepada Yth. {Tamu.Nama-id}
+
+Dengan penuh syukur dan bahagia, kami {mempelai1} & {mempelai2} bermaksud mengundang Bapak/Ibu/Saudara/i untuk hadir dan memberi doa restu di hari pernikahan kami.
+
+ {tanggal}
+ Pukul {waktu}
+ {lokasi}
+
+Info lengkap acara & lokasi bisa dilihat di undangan digital kami:
+{url-id}
+
+Merupakan suatu kehormatan besar bagi kami apabila Bapak/Ibu/Saudara/i berkenan hadir.
+
+Terima kasih 
+
+{DataPria.Nama} & {DataWanita.Nama}
